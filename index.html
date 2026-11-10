@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timothy Check-In System</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #101827;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background: #1c293b;
+    padding: 35px;
+    border-radius: 18px;
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 10px 35px #0006;
+}
+
+h1 {
+    color: #facc15;
+    margin-bottom: 10px;
+}
+
+p {
+    color: #cbd5e1;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 9px;
+    background: #eab308;
+    color: #111827;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #facc15;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    border: 1px solid #475569;
+    border-radius: 9px;
+    background: #0f172a;
+    color: white;
+    font-size: 18px;
+    text-align: center;
+    letter-spacing: 5px;
+}
+
+.hidden {
+    display: none;
+}
+
+.success {
+    color: #4ade80;
+    font-weight: bold;
+    font-size: 21px;
+}
+
+#error {
+    color: #f87171;
+}
+
+.history {
+    text-align: left;
+    margin-top: 20px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.entry {
+    background: #0f172a;
+    padding: 12px;
+    margin-bottom: 9px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.small {
+    font-size: 12px;
+    color: #94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>WELCOME</h1>
+    <p>Timothy Check-In System</p>
+
+    <div id="home">
+        <p>Please check in for today.</p>
+        <button onclick="showLogin()">Welcome</button>
+    </div>
+
+    <div id="login" class="hidden">
+        <h3>Please put in your Code number</h3>
+        <p>Enter your code to check in for today.</p>
+
+        <input
+            type="password"
+            id="code"
+            placeholder="Enter code"
+            maxlength="6"
+            inputmode="numeric"
+        >
+
+        <button onclick="checkIn()">Check In</button>
+        <p id="error"></p>
+    </div>
+
+    <div id="success" class="hidden">
+        <p class="success">Welcome back, Timothy!</p>
+        <p>You have successfully checked in.</p>
+
+        <div class="entry">
+            <strong>Date:</strong>
+            <span id="date"></span>
+            <br><br>
+            <strong>Time:</strong>
+            <span id="time"></span>
+        </div>
+
+        <button onclick="showHistory()">View Login History</button>
+        <button onclick="location.reload()">Return Home</button>
+    </div>
+
+    <div id="history" class="hidden">
+        <h2>Login History</h2>
+        <p>Your previous check-ins</p>
+
+        <div id="records" class="history"></div>
+
+        <button onclick="backToSuccess()">Back</button>
+    </div>
+
+    <p class="small">TIMOTHY CHECK-IN SYSTEM © 2026</p>
+
+</div>
+
+<script>
+
+// User information
+const USER_CODE = "071582";
+const USER_NAME = "Timothy";
+
+// Show login screen
+function showLogin() {
+    document.getElementById("home").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+}
+
+// Get saved login history
+function getHistory() {
+    return JSON.parse(
+        localStorage.getItem("timothyLogins") || "[]"
+    );
+}
+
+// Check code and check in
+function checkIn() {
+    const enteredCode = document.getElementById("code").value;
+    const error = document.getElementById("error");
+
+    if (enteredCode !== USER_CODE) {
+        error.textContent = "Incorrect code. Please try again.";
+        return;
+    }
+
+    const now = new Date();
+
+    const record = {
+        name: USER_NAME,
+        date: now.toLocaleDateString(),
+        time: now.toLocaleTimeString()
+    };
+
+    const history = getHistory();
+
+    // Save today's check-in only once
+    const alreadyCheckedIn = history.some(
+        item => item.date === record.date
+    );
+
+    if (!alreadyCheckedIn) {
+        history.unshift(record);
+        localStorage.setItem(
+            "timothyLogins",
+            JSON.stringify(history)
+        );
+    }
+
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("success").classList.remove("hidden");
+
+    document.getElementById("date").textContent =
+        alreadyCheckedIn ? history.find(
+            item => item.date === record.date
+        ).date : record.date;
+
+    document.getElementById("time").textContent =
+        alreadyCheckedIn ? "Already checked in today" : record.time;
+}
+
+// Show history
+function showHistory() {
+    document.getElementById("success").classList.add("hidden");
+    document.getElementById("history").classList.remove("hidden");
+
+    const records = document.getElementById("records");
+    const history = getHistory();
+
+    records.innerHTML = "";
+
+    if (history.length === 0) {
+        records.innerHTML = "<p>No check-ins yet.</p>";
+        return;
+    }
+
+    history.forEach((item, index) => {
+        records.innerHTML += `
+            <div class="entry">
+                <strong>Check-in #${index + 1}</strong><br>
+                Name: ${item.name}<br>
+                Date: ${item.date}<br>
+                Time: ${item.time}
+            </div>
+        `;
+    });
+}
+
+// Return to success screen
+function backToSuccess() {
+    document.getElementById("history").classList.add("hidden");
+    document.getElementById("success").classList.remove("hidden");
+}
+
+</script>
+
+</body>
+</html>
